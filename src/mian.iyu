@@ -1,0 +1,116 @@
+<View id="1" did="0" type="LinearLayout">
+<ppt>width=-1
+height=50dp
+orientation=horizontal
+backgroundcolor=#50c4e5
+gravity=center_vertical</ppt>
+<event></event>
+</View>
+<View id="10" did="1" type="Button">
+<ppt>width=60
+height=-2
+text=三
+visibility=visible</ppt>
+<event><eventItme type="clicki">s 控件 = st_vW
+//弹出式菜单依附的控件
+//可以通过gvs(控件id,控件)指定其他控件
+
+javanew(弹出式菜单,"android.support.v7.widget.PopupMenu","Context",activity,"android.view.View",控件)
+//new一个弹出式菜单
+
+javags(mPopup,弹出式菜单,"android.support.v7.widget.PopupMenu","mPopup")
+f(mPopup != null){
+  java(null,mPopup,"android.support.v7.view.menu.MenuPopupHelper.setForceShowIcon","boolean",true)
+  //设置是否留出图标的位置，默认false
+  //如果不需要图标请设置为false
+  }
+
+sbp("@home_icon_menu_black_l_normal.png",图像)
+javanew(图像,"android.graphics.drawable.BitmapDrawable","android.graphics.Bitmap",图像)
+//加载图标
+
+java(菜单,弹出式菜单,"android.support.v7.widget.PopupMenu.getMenu")
+//准备
+
+java(菜单项,菜单,"android.view.Menu.add","CharSequence","编辑列表")
+//添加菜单项
+java(null,菜单项,"android.view.MenuItem.setIcon","android.graphics.drawable.Drawable",图像)
+//设置图标
+call(null,"mjava","a.EditMenu",菜单项)
+//设置事件
+
+sbp("@home_icon_menu_black_l_normal.png",src)
+javanew(src,"android.graphics.drawable.BitmapDrawable","android.graphics.Bitmap",src)
+//加载图标
+
+java(菜单,弹出式菜单,"android.support.v7.widget.PopupMenu.getMenu")
+//准备
+
+//设置事件
+
+java(菜单项,菜单,"android.view.Menu.add","CharSequence","设置")
+java(null,菜单项,"android.view.MenuItem.setIcon","android.graphics.drawable.Drawable",src)
+call(null,"mjava","a.置弹出式菜单点击事件",菜单项)
+
+java(null,弹出式菜单,"android.support.v7.widget.PopupMenu.show")
+//显示弹出式菜单</eventItme></event>
+</View>
+<View id="5" did="1" type="TextView">
+<ppt>width=-2
+height=-2
+text=养鸽器</ppt>
+<event></event>
+</View>
+<View id="8" did="0" type="LinearLayout">
+<ppt>width=-1
+height=-1
+orientation=vertical
+layout_weight=1</ppt>
+<event></event>
+</View>
+<View id="19" did="8" type="TableLayout">
+<ppt>width=-2
+height=-2</ppt>
+<event></event>
+</View>
+<View id="11" did="0" type="LinearLayout">
+<ppt>width=-1
+height=50dp
+orientation=horizontal</ppt>
+<event></event>
+</View>
+<View id="13" did="11" type="Button">
+<ppt>width=-2
+height=-1
+text=主页
+layout_weight=50</ppt>
+<event></event>
+</View>
+<View id="15" did="11" type="Button">
+<ppt>width=-2
+height=-1
+text=关于
+layout_weight=50</ppt>
+<event></event>
+</View>
+<UIEventset><eventItme type="loading">
+//java(cs, activity, "android.app.Activity.getWindow")
+//java(cs2, cs, "android.view.Window.getDecorView")
+//java(null, cs2, "android.view.View.setSystemUiVisibility", "int", "8192")
+//java(null, cs, "android.view.Window.addFlags", "int", "67108864")
+
+fn notice.权限检查()
+f(sss.Yos_通知权限)
+{
+  syso("通知权限已授予")
+}else
+{
+  syso("注意：通知权限未授予，无法显示通知")
+}
+
+call(null,"mjava","a.InitMenu")
+//t()
+//{
+//  call(null, "mjava", "a.flash")
+//}
+</eventItme></UIEventset>

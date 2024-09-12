@@ -1,0 +1,327 @@
+import org.json.JSONArray;
+import org.json.JSONObject;
+import android.content.res.AssetManager;
+import android.view.MenuItem;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import android.os.Handler;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Runnable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import android.graphics.Color;
+import android.graphics.Bitmap;
+public static void 置弹出式菜单点击事件(MenuItem 菜单项) {
+  菜单项.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+    public boolean onMenuItemClick(MenuItem 项) { //菜单项被点击事件
+      tw("您已选择:" + 项.getTitle());
+      return true;
+    }
+  });
+}
+public int innerDelayTime = 1000;
+public static String request(String u, String userhash) {
+  String response = null;
+  String bm = "utf-8";
+  try {
+    URL url = new URL(u);
+    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+    conn.setRequestMethod("GET");
+    conn.setConnectTimeout(15000);
+    conn.setReadTimeout(15000);
+    conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+    conn.setRequestProperty("Accept", "application/json");
+    conn.setRequestProperty("Cookie", "userhash=" + userhash);
+    conn.setDoInput(true);
+    conn.setDoOutput(true);
+    InputStream is = conn.getInputStream();
+    BufferedReader br = new BufferedReader(new InputStreamReader(is, bm));
+    StringBuilder sb = new StringBuilder();
+    String line;
+    while((line = br.readLine()) != null) sb.append(line + "\n");
+    response = sb.toString().trim();
+    br.close();
+    conn.disconnect();
+  }
+  catch(Exception e) {
+    syso(e);
+  }
+  return response;
+}
+public int delayTime = innerDelayTime * 10;
+public int[][] newData = new int[3378][2];
+public static void getInf(JSONArray list, String userhash) {
+  for(int k = 0; k < list.length(); k++) {
+    if(list.get(k) == null) continue;
+    JSONObject innerObject = list.getJSONObject(k);
+    int id = innerObject.getInt("Id");
+    boolean onlyPo = innerObject.getBoolean("OnlyPo");
+    String mark = innerObject.getString("Mark");
+    int replyCount = newData[k][0];
+    int newCount = newData[k][1];
+    if(newCount == -1) newCount = 0;
+    String api = "https://api.nmb.best/api/thread";
+    if(onlyPo) api = "https://api.nmb.best/api/po";
+    String uri = "id=" + Integer.toString(id) + "&page=337845818";
+    String url = api + "?" + uri;
+    try {
+      String body = request(url, userhash);
+      JSONObject jsonObject = new JSONObject(body);
+      int newReplyCount = jsonObject.getInt("ReplyCount");
+      if(newData[k][1] == -1) newCount = 0;
+      newCount = newReplyCount - replyCount + newCount;
+      replyCount = newReplyCount;
+    }
+    catch(Exception e) {
+      syso(e);
+    }
+    finally {
+      newData[k][0] = replyCount;
+      newData[k][1] = newCount;
+    }
+    Thread.sleep(innerDelayTime);
+  }
+}
+public int cnt = 1;
+public boolean[] published = new boolean[3378];
+public int[] latest = new int[3378];
+public static void flashForever(JSONArray list, String userhash) {
+  while(true) {
+    if(i.sss("finished")) break;
+    getInf(list, userhash);
+    if(i.sss("finished")) break;
+    for(int k = 0; k < list.length(); k++) {
+      if(list.get(k) == null) continue;
+      int fa = 3378 + k * 20;
+      int Data1 = newData[k][0], Data2 = newData[k][1];
+      if(i.sss("finished")) break;
+      if(Data2 < 0) {
+        newData[k][1] = 0;
+        Data2 = 0;
+      }
+      list.get(k).put("ReplyCount", Data1);
+      list.get(k).put("NewCount", Data2);
+      if(i.sss("finished")) break;
+      int index = k;
+      if(Data2 - latest[k] > 0) {
+        notice(list.get(index).getString("Mark"), "共有" + Integer.toString(Data2) + "条新回复", 3378 + index);
+      }
+      /*else if(Data2 == 0 && latest[index] != 0) {
+        i.call("myu", "notice.取消通知", new Object[] {
+          3378 + index
+        });
+      }*/
+      latest[index] = Data2;
+      i.ufnsui(new com.iapp.interfaces.OnHandler() {
+        public void on() {
+          i.us(fa + 3, "text", Integer.toString(Data1));
+          i.us(fa + 4, "text", Integer.toString(Data2));
+        }
+      });
+    }
+    JSONObject json = new JSONObject();
+    json.put("UserHash", userhash);
+    json.put("List", list);
+    if(i.sss("finished")) break;
+    i.fw("%config.json", json.toString());
+    if(i.sss("finished")) break;
+    Thread.sleep(delayTime);
+  }
+}
+public void notice(String t, String c, int id) {
+  Bitmap p = i.sbp("@notice.png");
+  i.call("myu", "notice.notice", new Object[] {
+    t, c, p, p, null, c, id, true
+  });
+}
+public static void InitMenu() {
+  //syso(Color.BLUE);
+  boolean fileExists = i.fe("%config.json");
+  if(!fileExists) {
+    i.fw("%config.json", "{\"UserHash\":\"\",\"List\":[]}", "utf-8");
+  }
+  //  if(fileExists) {
+  String config = i.fr("%config.json", "utf-8");
+  JSONObject object = new JSONObject(config);
+  String userhash = object.getString("UserHash");
+  JSONArray list = object.getJSONArray("List");
+  int fa = 3378 - 20;
+  for(int j = 0; j < 20; j++) i.urvw(fa + j);
+  i.nvw(fa, 19, "表格项", "");
+  i.nvw(fa + 1, fa, "文本", "width=-2\nheight=-2\ntext=串号\nlayout_margin=10dp\ntextSize=11sp");
+  i.nvw(fa + 2, fa, "文本", "width=-2\nheight=-2\ntext=备注\nlayout_margin=10dp\ntextSize=11sp");
+  i.nvw(fa + 3, fa, "文本", "width=-2\nheight=-2\ntext=回复\nlayout_margin=10dp\ntextSize=12sp");
+  i.nvw(fa + 4, fa, "文本", "width=-2\nheight=-2\ntext=新\nlayout_margin=10dp\ntextSize=12sp");
+  for(int k = 0; k < list.length(); k++) {
+    if(list.get(k) == null) continue;
+    JSONObject innerObject = list.getJSONObject(k);
+    String id = Integer.toString(innerObject.getInt("Id"));
+    String mark = innerObject.getString("Mark");
+    String onlyPo = innerObject.getBoolean("OnlyPo") ? "只看Po" : " ";
+    newData[k][0] = innerObject.getInt("ReplyCount");
+    newData[k][1] = innerObject.getInt("NewCount");
+    String replyCount = Integer.toString(innerObject.getInt("ReplyCount"));
+    int tmp = innerObject.getInt("NewCount");
+    if(tmp == -1) tmp = 0;
+    String newCount = Integer.toString(tmp);
+    fa = 3378 + k * 20;
+    for(int j = 0; j < 20; j++) i.urvw(fa + j);
+    i.nvw(fa, 19, "表格项", "");
+    i.nvw(fa + 1, fa, "文本", "width=-2\nheight=-2\ntext=" + id + "\nlayout_margin=10dp\ntextSize=11sp");
+    i.nvw(fa + 2, fa, "文本", "width=-2\nheight=-2\ntext=" + mark + "\nlayout_margin=10dp\ntextSize=11sp");
+    i.nvw(fa + 3, fa, "文本", "width=-2\nheight=-2\ntext=" + replyCount + "\nlayout_margin=10dp\ntextSize=12sp");
+    i.nvw(fa + 4, fa, "文本", "width=-2\nheight=-2\ntext=" + newCount + "\nlayout_margin=10dp\ntextSize=12sp");
+    i.nvw(fa + 5, fa, "文本", "width=-2\nheight=-2\ntext=" + onlyPo + "\nlayout_margin=10dp\ntextSize=9sp");
+    i.nvw(fa + 6, fa, "按钮", "width=-2\nheight=-2\ntext=已读\ntextSize=12sp");
+    i.ssj(fa + 6, "clicki", new android.view.View.OnClickListener() {
+      public int index = k;
+      public int father = fa;
+      public void onClick(android.view.View v) {
+        newData[index][1] = -1;
+        published[index] = false;
+        i.call("myu", "notice.取消通知", new Object[] {
+          3378 + index
+        });
+        i.ufnsui(new com.iapp.interfaces.OnHandler() {
+          public void on() {
+            i.us(father + 4, "text", "0");
+          }
+        });
+      }
+    });
+  }
+  i.sss("finished", false);
+  i.t(new OnThread() {
+    public void run() {
+      flashForever(list, userhash);
+    }
+  });
+  //  }
+  //  else {
+  //    i.fw("%config.json", "{\"UserHash\":\"\",\"List\":[]}", "utf-8");
+  //  }
+}
+public boolean[] onlyPoArray = new boolean[3378];
+public boolean[] erased = new boolean[3378];
+public static void EditMenuFunc() {
+  i.sss("finished", true);
+  erased = new boolean[3378];
+  String config = i.fr("%config.json", "utf-8");
+  JSONObject object = new JSONObject(config);
+  String userhash = object.getString("UserHash");
+  JSONArray list = object.getJSONArray("List");
+  i.ufnsui(new com.iapp.interfaces.OnHandler() {
+    public void on() {
+      int fa = 3378 - 20;
+      for(int j = 0; j < 20; j++) i.urvw(fa + j);
+      i.nvw(fa, 19, "表格项", "");
+      i.nvw(fa + 1, fa, "文本", "width=-2\nheight=-2\ntext=串号\nlayout_margin=10dp\ntextSize=11sp");
+      i.nvw(fa + 2, fa, "文本", "width=-2\nheight=-2\ntext=备注\nlayout_margin=10dp\ntextSize=11sp");
+      i.nvw(fa + 3, fa, "文本", "width=-2\nheight=-2\ntext=只看Po\nlayout_margin=10dp\ntextSize=12sp");
+      i.nvw(fa + 4, 1, "按钮", "width=-2\nheight=-2\ntext=保存");
+      i.ssj(fa + 4, "clicki", new android.view.View.OnClickListener() {
+        public void onClick(android.view.View v) {
+          i.t(new OnThread() {
+            public void run() {
+              JSONObject json = new JSONObject();
+              JSONArray list2 = new JSONArray();
+              json.put("UserHash", userhash);
+              for(int k = 0; k < list.length(); k++) {
+                if(erased[k]) continue;
+                int father = 3378 + k * 20;
+                list.get(k).put("Id", Integer.parseInt(i.ug(father + 1, "text")));
+                list.get(k).put("Mark", i.ug(father + 2, "text"));
+                list.get(k).put("OnlyPo", onlyPoArray[k]);
+                list2.put(list.get(k));
+              }
+              json.put("List", list2);
+              i.fw("%config.json", json.toString());
+              i.ufnsui(new com.iapp.interfaces.OnHandler() {
+                public void on() {
+                  InitMenu();
+                }
+              });
+            }
+          });
+        }
+      });
+      i.nvw(fa + 5, 1, "按钮", "width=-2\nheight=-2\ntext=添加");
+      i.ssj(fa + 5, "clicki", new android.view.View.OnClickListener() {
+        public void onClick(android.view.View v) {
+          list.put(new JSONObject("{\"Id\":60000000,\"Mark\":\"\",\"OnlyPo\":false,\"ReplyCount\":0,\"NewCount\":-1}"));
+          i.ufnsui(new com.iapp.interfaces.OnHandler() {
+            public void on() {
+              int k = list.length() - 1;
+              int fa = 3378 + k * 20;
+              for(int j = 0; j < 20; j++) i.urvw(fa + j);
+              i.nvw(fa, 19, "表格项", "");
+              i.nvw(fa + 1, fa, "编辑框", "width=-2\nheight=-2\ntext=60000000\nlayout_margin=10dp\ntextSize=11sp");
+              i.nvw(fa + 2, fa, "编辑框", "width=-2\nheight=-2\ntext=\nlayout_margin=10dp\ntextSize=11sp");
+              i.nvw(fa + 3, fa, "开关", "width=-2\nheight=-2\nlayout_margin=10dp");
+              i.ssj(fa + 3, "clicki", new android.view.View.OnClickListener() {
+                public int index = k;
+                public void onClick(android.view.View v) {
+                  onlyPoArray[index] = !onlyPoArray[index];
+                }
+              });
+            }
+          });
+        }
+      });
+      for(int k = 0; k < list.length(); k++) {
+        JSONObject innerObject = list.getJSONObject(k);
+        String id = Integer.toString(innerObject.getInt("Id"));
+        String mark = innerObject.getString("Mark");
+        onlyPoArray[k] = innerObject.getBoolean("OnlyPo");
+        fa = 3378 + k * 20;
+        i.nvw(fa, 19, "表格项", "");
+        for(int j = 0; j < 20; j++) i.urvw(fa + j);
+        i.nvw(fa + 1, fa, "编辑框", "width=-2\nheight=-2\ntext=" + id + "\nlayout_margin=10dp\ntextSize=11sp");
+        i.nvw(fa + 2, fa, "编辑框", "width=-2\nheight=-2\ntext=" + mark + "\nlayout_margin=10dp\ntextSize=11sp");
+        if(onlyPoArray[k]) i.nvw(fa + 3, fa, "开关", "width=-2\nheight=-2\nlayout_margin=10dp\nchecked=true");
+        else i.nvw(fa + 3, fa, "开关", "width=-2\nheight=-2\nlayout_margin=10dp");
+        i.ssj(fa + 3, "clicki", new android.view.View.OnClickListener() {
+          public int index = k;
+          public void onClick(android.view.View v) {
+            onlyPoArray[index] = !onlyPoArray[index];
+          }
+        });
+        i.nvw(fa + 4, fa, "按钮", "width=-2\nheight=-2\nlayout_margin=10dp\ntext=删除");
+        i.ssj(fa + 4, "clicki", new android.view.View.OnClickListener() {
+          public int index = k;
+          public void onClick(android.view.View v) {
+            i.ufnsui(new com.iapp.interfaces.OnHandler() {
+              public void on() {
+                int fa = 3378 + index * 20;
+                list.put(index, null);
+                erased[index] = true;
+                for(int j = 0; j < 20; j++) i.urvw(fa + j);
+              }
+            });
+          }
+        });
+      }
+    }
+  });
+}
+public static void EditMenu(MenuItem 菜单项) {
+  菜单项.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+    public boolean onMenuItemClick(MenuItem 项) {
+      //菜单项被点击事件
+      i.t(new OnThread() {
+        public void run() {
+          EditMenuFunc();
+        }
+      });
+      return true;
+    }
+  });
+}
