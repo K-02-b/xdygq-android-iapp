@@ -68,7 +68,12 @@ orientation=vertical
 layout_weight=1</ppt>
 <event></event>
 </View>
-<View id="19" did="8" type="TableLayout">
+<View id="20" did="8" type="ScrollView">
+<ppt>width=-2
+height=-2</ppt>
+<event></event>
+</View>
+<View id="19" did="20" type="TableLayout">
 <ppt>width=-2
 height=-2</ppt>
 <event></event>
